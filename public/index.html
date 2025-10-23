@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper Files Inspector - Web UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area {
+            padding: 3rem;
+            text-align: center;
+            border: 3px dashed #e0e6ed;
+            margin: 2rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .btn-success {
+            background: #48bb78;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .file-info {
+            background: #f7fafc;
+            padding: 1rem;
+            margin: 1rem 2rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .file-info h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-info p {
+            color: #666;
+            margin: 0.25rem 0;
+        }
+
+        .actions {
+            padding: 2rem;
+            border-top: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .actions h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .results h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .table-info {
+            background: #f7fafc;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .table-info h4 {
+            color: #48bb78;
+            margin-bottom: 0.5rem;
+        }
+
+        .columns-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .column-item {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .column-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .column-type {
+            color: #667eea;
+            font-size: 0.8rem;
+        }
+
+        .sample-data {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .sample-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .sample-table th,
+        .sample-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .sample-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #38a169;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-area {
+                padding: 2rem 1rem;
+                margin: 1rem;
+            }
+            
+            .columns-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Hyper Files Inspector</h1>
+            <p>Upload and analyze your Tableau .hyper files with ease</p>
+        </div>
+
+        <div class="main-card">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drop your .hyper file here or click to browse</div>
+                <div class="upload-subtext">Maximum file size: 500MB</div>
+                <input type="file" id="fileInput" class="file-input" accept=".hyper">
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <h3>📄 Uploaded File</h3>
+                <p id="fileName"></p>
+                <p id="fileSize"></p>
+                <p id="uploadTime"></p>
+            </div>
+
+            <div class="actions" id="actions">
+                <h3>🛠️ Choose an Action</h3>
+                <button class="btn" id="inspectBtn">🔍 Inspect File</button>
+                <button class="btn btn-secondary" id="exportSampleBtn">📤 Export Sample Data</button>
+                <button class="btn btn-secondary" id="exportFullBtn">📤 Export Full Data</button>
+                <button class="btn btn-success" id="downloadJsonBtn" style="display: none;">💾 Download JSON</button>
+                <button class="btn btn-success" id="downloadCsvBtn" style="display: none;">💾 Download CSV</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p id="loadingText">Processing your file...</p>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <h2 id="resultsTitle">📊 Results</h2>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let lastExportData = null;
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const actions = document.getElementById('actions');
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        const results = document.getElementById('results');
+        const resultsContent = document.getElementById('resultsContent');
+
+        // Buttons
+        const inspectBtn = document.getElementById('inspectBtn');
+        const exportSampleBtn = document.getElementById('exportSampleBtn');
+        const exportFullBtn = document.getElementById('exportFullBtn');
+        const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+        const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Button event listeners
+        inspectBtn.addEventListener('click', inspectFile);
+        exportSampleBtn.addEventListener('click', () => exportFile(true));
+        exportFullBtn.addEventListener('click', () => exportFile(false));
+        downloadJsonBtn.addEventListener('click', () => downloadFile('json'));
+        downloadCsvBtn.addEventListener('click', () => downloadFile('csv'));
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadFile(file);
+            }
+        }
+
+        async function uploadFile(file) {
+            if (!file.name.toLowerCase().endsWith('.hyper')) {
+                showError('Please select a .hyper file');
+                return;
+            }
+
+            if (file.size > 500 * 1024 * 1024) {
+                showError('File is too large. Maximum size is 500MB.');
+                return;
+            }
+
+            showLoading('Uploading file...');
+
+            const formData = new FormData();
+            formData.append('hyperFile', file);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentFile = result.file;
+                    showFileInfo(result.file);
+                    hideLoading();
+                    showActions();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Failed to upload file: ' + error.message);
+            }
+        }
+
+        function showFileInfo(file) {
+            document.getElementById('fileName').textContent = `Name: ${file.originalName}`;
+            document.getElementById('fileSize').textContent = `Size: ${formatFileSize(file.size)}`;
+            document.getElementById('uploadTime').textContent = `Uploaded: ${new Date(file.uploadTime).toLocaleString()}`;
+            fileInfo.style.display = 'block';
+        }
+
+        function showActions() {
+            actions.style.display = 'block';
+        }
+
+        function showLoading(text) {
+            loadingText.textContent = text;
+            loading.style.display = 'block';
+            actions.style.display = 'none';
+            results.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        async function inspectFile() {
+            if (!currentFile) return;
+
+            showLoading('Inspecting file...');
+
+            try {
+                const response = await fetch(`/api/inspect/${currentFile.id}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showInspectionResults(result.data);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showError('Failed to inspect file: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function exportFile(sampleOnly) {
+            if (!currentFile) return;
+
+            const action = sampleOnly ? 'Exporting sample data...' : 'Exporting full data...';
+            showLoading(action);
+
+            try {
+                const response = await fetch(`/api/export/${currentFile.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sampleOnly })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    lastExportData = result.data;
+                    showExportResults(result.data);
+                    showDownloadButtons();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showError('Failed to export file: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showInspectionResults(data) {
+            let html = `
+                <div class="success">
+                    ✅ Successfully inspected: <strong>${data.file_name}</strong>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <p><strong>📁 File Size:</strong> ${formatFileSize(data.file_size)}</p>
+                    <p><strong>🗂️ Schemas:</strong> ${data.schemas.join(', ')}</p>
+                    <p><strong>📋 Total Tables:</strong> ${data.total_tables}</p>
+                    <p><strong>📈 Total Rows:</strong> ${data.total_rows.toLocaleString()}</p>
+                </div>
+            `;
+
+            if (data.tables && data.tables.length > 0) {
+                html += '<h3>📊 Tables</h3>';
+                
+                data.tables.forEach((table, index) => {
+                    html += `
+                        <div class="table-info">
+                            <h4>${index + 1}. ${table.full_name}</h4>
+                            <p><strong>Type:</strong> ${table.type}</p>
+                            <p><strong>Rows:</strong> ${typeof table.row_count === 'number' ? table.row_count.toLocaleString() : table.row_count}</p>
+                            <p><strong>Columns:</strong> ${table.columns.length}</p>
+                            
+                            <div class="columns-list">
+                                ${table.columns.map(col => `
+                                    <div class="column-item">
+                                        <div class="column-name">${col.name}</div>
+                                        <div class="column-type">${col.type} ${col.nullable ? '(nullable)' : '(required)'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            ${table.sample_data && table.sample_data.length > 0 ? `
+                                <h5>Sample Data:</h5>
+                                <div class="sample-data">
+                                    <table class="sample-table">
+                                        <thead>
+                                            <tr>
+                                                ${table.columns.map(col => `<th>${col.name}</th>`).join('')}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${table.sample_data.slice(0, 3).map(row => `
+                                                <tr>
+                                                    ${row.map(cell => `<td>${cell === null ? 'NULL' : String(cell).substring(0, 50)}</td>`).join('')}
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            resultsContent.innerHTML = html;
+            results.style.display = 'block';
+        }
+
+        function showExportResults(data) {
+            let html = `
+                <div class="success">
+                    ✅ Successfully exported data from: <strong>${data.file_name}</strong>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <p><strong>📁 File Size:</strong> ${formatFileSize(data.file_size)}</p>
+                    <p><strong>📤 Export Type:</strong> ${data.export_type === 'sample_only' ? 'Sample Data Only' : 'Full Data Export'}</p>
+                    <p><strong>📋 Total Tables:</strong> ${data.total_tables}</p>
+                    <p><strong>📈 Total Rows Exported:</strong> ${data.total_rows_exported.toLocaleString()}</p>
+                </div>
+                
+                <h3>📊 Exported Tables</h3>
+                <div style="overflow-x: auto;">
+                    <table class="sample-table">
+                        <thead>
+                            <tr>
+                                <th>Table</th>
+                                <th>Schema</th>
+                                <th>Total Rows</th>
+                                <th>Exported Rows</th>
+                                <th>Columns</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.tables.map(table => `
+                                <tr>
+                                    <td>${table.name}</td>
+                                    <td>${table.schema}</td>
+                                    <td>${typeof table.total_rows === 'number' ? table.total_rows.toLocaleString() : table.total_rows}</td>
+                                    <td>${table.exported_rows.toLocaleString()}</td>
+                                    <td>${table.columns.length}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            resultsContent.innerHTML = html;
+            results.style.display = 'block';
+        }
+
+        function showDownloadButtons() {
+            downloadJsonBtn.style.display = 'inline-block';
+            downloadCsvBtn.style.display = 'inline-block';
+        }
+
+        function downloadFile(format) {
+            if (!currentFile || !lastExportData) return;
+
+            const sampleOnly = lastExportData.export_type === 'sample_only';
+            const maxRows = lastExportData.max_rows_per_table;
+            
+            let url = `/api/download/${currentFile.id}/${format}?sampleOnly=${sampleOnly}`;
+            if (maxRows) {
+                url += `&maxRows=${maxRows}`;
+            }
+
+            // Create a temporary link and click it to trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showError(message) {
+            resultsContent.innerHTML = `<div class="error">❌ ${message}</div>`;
+            results.style.display = 'block';
+        }
+
+        function formatFileSize(bytes) {
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            if (bytes === 0) return '0 Bytes';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

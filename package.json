@@ -1,0 +1,38 @@
+{
+  "name": "hyper-files-inspector",
+  "version": "1.0.0",
+  "description": "A JavaScript application to inspect Tableau Hyper files",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "inspect": "node index.js inspect",
+    "discover": "node index.js discover",
+    "export": "node index.js export",
+    "web": "node server.js",
+    "setup": "npm install && pip install tableauhyperapi"
+  },
+  "keywords": [
+    "tableau",
+    "hyper",
+    "inspector",
+    "data",
+    "analytics"
+  ],
+  "author": "Nicole Mark",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "glob": "^10.3.10",
+    "inquirer": "^9.2.11",
+    "multer": "^1.4.5-lts.1",
+    "ora": "^7.0.1",
+    "table": "^6.8.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
