@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "🚀 Publishing Hyper Files Inspector to GitHub"
+echo ""
+echo "After creating the repository on GitHub, run these commands:"
+echo ""
+echo "# Add GitHub remote (replace YOUR_USERNAME with your GitHub username)"
+echo "git remote add origin https://github.com/YOUR_USERNAME/hyper-files-inspector.git"
+echo ""
+echo "# Push to GitHub"
+echo "git branch -M main"
+echo "git push -u origin main"
+echo ""
+echo "🎉 Your project will then be live on GitHub!"
+echo ""
+echo "Repository URL will be:"
+echo "https://github.com/YOUR_USERNAME/hyper-files-inspector"

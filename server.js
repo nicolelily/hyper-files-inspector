@@ -4,6 +4,7 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import path from 'path';
+import os from 'os';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -21,18 +22,18 @@ class HyperFilesInspector {
     async executePython(args) {
         return new Promise((resolve, reject) => {
             const process = spawn(this.pythonPath, [this.inspectorScript, ...args]);
-            
+
             let stdout = '';
             let stderr = '';
-            
+
             process.stdout.on('data', (data) => {
                 stdout += data.toString();
             });
-            
+
             process.stderr.on('data', (data) => {
                 stderr += data.toString();
             });
-            
+
             process.on('close', (code) => {
                 if (code === 0) {
                     try {
@@ -45,7 +46,7 @@ class HyperFilesInspector {
                     reject(new Error(`Python script failed with code ${code}:\\n${stderr}`));
                 }
             });
-            
+
             process.on('error', (error) => {
                 reject(new Error(`Failed to start Python process: ${error.message}`));
             });
@@ -64,12 +65,12 @@ class HyperFilesInspector {
 
     async exportFile(filePath, options = {}) {
         const { sampleOnly = false, maxRows = null } = options;
-        
+
         try {
             const args = ['export', filePath];
             if (sampleOnly) args.push('--sample-only');
             if (maxRows) args.push('--max-rows', maxRows.toString());
-            
+
             const result = await this.executePython(args);
             return result.success ? result : null;
         } catch (error) {
@@ -165,7 +166,7 @@ app.post('/api/upload', upload.single('hyperFile'), async (req, res) => {
 app.post('/api/inspect/:fileId', async (req, res) => {
     try {
         const filePath = path.join(uploadsDir, req.params.fileId);
-        
+
         // Check if file exists
         try {
             await fs.access(filePath);
@@ -174,7 +175,7 @@ app.post('/api/inspect/:fileId', async (req, res) => {
         }
 
         const result = await inspector.inspectFile(filePath);
-        
+
         if (result) {
             res.json({
                 success: true,
@@ -194,7 +195,7 @@ app.post('/api/export/:fileId', async (req, res) => {
     try {
         const filePath = path.join(uploadsDir, req.params.fileId);
         const { sampleOnly = false, maxRows = null } = req.body;
-        
+
         // Check if file exists
         try {
             await fs.access(filePath);
@@ -206,7 +207,7 @@ app.post('/api/export/:fileId', async (req, res) => {
             sampleOnly,
             maxRows
         });
-        
+
         if (result) {
             res.json({
                 success: true,
@@ -227,7 +228,7 @@ app.get('/api/download/:fileId/:format', async (req, res) => {
         const filePath = path.join(uploadsDir, req.params.fileId);
         const format = req.params.format; // 'json' or 'csv'
         const { sampleOnly = false, maxRows = null } = req.query;
-        
+
         // Check if file exists
         try {
             await fs.access(filePath);
@@ -239,13 +240,13 @@ app.get('/api/download/:fileId/:format', async (req, res) => {
             sampleOnly: sampleOnly === 'true',
             maxRows: maxRows ? parseInt(maxRows) : null
         });
-        
+
         if (!result) {
             return res.status(500).json({ error: 'Failed to export file' });
         }
 
         const originalName = req.params.fileId.split('-').slice(1).join('-').replace('.hyper', '');
-        
+
         if (format === 'json') {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Content-Disposition', `attachment; filename="${originalName}-export.json"`);
@@ -253,30 +254,30 @@ app.get('/api/download/:fileId/:format', async (req, res) => {
         } else if (format === 'csv') {
             // Convert to CSV format
             let csvContent = '';
-            
+
             for (const table of result.tables) {
                 if (table.data && table.data.length > 0) {
                     // Headers
                     const headers = Object.keys(table.data[0]);
-                    csvContent += headers.join(',') + '\\n';
-                    
+                    csvContent += headers.join(',') + '\n';
+
                     // Data rows
                     for (const row of table.data) {
                         const values = headers.map(header => {
                             const value = row[header];
                             if (value === null || value === undefined) return '';
                             const str = String(value);
-                            if (str.includes(',') || str.includes('"') || str.includes('\\n')) {
+                            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
                                 return `"${str.replace(/"/g, '""')}"`;
                             }
                             return str;
                         });
-                        csvContent += values.join(',') + '\\n';
+                        csvContent += values.join(',') + '\n';
                     }
-                    csvContent += '\\n'; // Separator between tables
+                    csvContent += '\n'; // Separator between tables
                 }
             }
-            
+
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename="${originalName}-export.csv"`);
             res.send(csvContent);
@@ -289,17 +290,123 @@ app.get('/api/download/:fileId/:format', async (req, res) => {
     }
 });
 
+// Save exported data to local disk
+app.post('/api/save/:fileId', async (req, res) => {
+    try {
+        const filePath = path.join(uploadsDir, req.params.fileId);
+        const { targetPath, format, sampleOnly = false, maxRows = null } = req.body;
+
+        if (!targetPath) {
+            return res.status(400).json({ error: 'Target path is required' });
+        }
+
+        // Check if file exists
+        try {
+            await fs.access(filePath);
+        } catch {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const result = await inspector.exportFile(filePath, {
+            sampleOnly,
+            maxRows
+        });
+
+        if (!result) {
+            return res.status(500).json({ error: 'Failed to export file' });
+        }
+
+        const originalName = req.params.fileId.split('-').slice(1).join('-').replace('.hyper', '');
+
+        // Resolve home directory if ~ is used
+        let resolvedPath = targetPath;
+        if (targetPath.startsWith('~/')) {
+            resolvedPath = path.join(os.homedir(), targetPath.slice(2));
+        } else if (targetPath === '~') {
+            resolvedPath = os.homedir();
+        }
+
+        // Create directory if it doesn't exist
+        try {
+            await fs.mkdir(resolvedPath, { recursive: true });
+        } catch (error) {
+            // Ignore if it already exists, or fail if we can't create it
+            if (error.code !== 'EEXIST') {
+                // If it's not a directory, that might be an issue, but let's try to write to it if it's a file path?
+                // Actually, let's assume targetPath is a DIRECTORY.
+            }
+        }
+
+        // Check if resolvedPath is a directory
+        try {
+            const stats = await fs.stat(resolvedPath);
+            if (!stats.isDirectory()) {
+                return res.status(400).json({ error: 'Target path must be a directory' });
+            }
+        } catch (error) {
+            // If it doesn't exist, we tried to create it. If that failed, we'll catch it here.
+            // But we already tried mkdir.
+        }
+
+        const filename = `${originalName}-export.${format}`;
+        const fullOutputPath = path.join(resolvedPath, filename);
+
+        if (format === 'json') {
+            await fs.writeFile(fullOutputPath, JSON.stringify(result, null, 2));
+        } else if (format === 'csv') {
+            // Convert to CSV format
+            let csvContent = '';
+
+            for (const table of result.tables) {
+                if (table.data && table.data.length > 0) {
+                    // Headers
+                    const headers = Object.keys(table.data[0]);
+                    csvContent += headers.join(',') + '\n';
+
+                    // Data rows
+                    for (const row of table.data) {
+                        const values = headers.map(header => {
+                            const value = row[header];
+                            if (value === null || value === undefined) return '';
+                            const str = String(value);
+                            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                                return `"${str.replace(/"/g, '""')}"`;
+                            }
+                            return str;
+                        });
+                        csvContent += values.join(',') + '\n';
+                    }
+                    csvContent += '\n'; // Separator between tables
+                }
+            }
+            await fs.writeFile(fullOutputPath, csvContent);
+        } else {
+            return res.status(400).json({ error: 'Invalid format. Use json or csv.' });
+        }
+
+        res.json({
+            success: true,
+            message: `File saved successfully to ${fullOutputPath}`,
+            path: fullOutputPath
+        });
+
+    } catch (error) {
+        console.error('Save error:', error);
+        res.status(500).json({ error: 'Internal server error: ' + error.message });
+    }
+});
+
 // Clean up old files (files older than 1 hour)
 async function cleanupOldFiles() {
     try {
         const files = await fs.readdir(uploadsDir);
         const now = Date.now();
         const oneHour = 60 * 60 * 1000;
-        
+
         for (const file of files) {
             const filePath = path.join(uploadsDir, file);
             const stats = await fs.stat(filePath);
-            
+
             if (now - stats.mtime.getTime() > oneHour) {
                 await fs.unlink(filePath);
                 console.log(`Cleaned up old file: ${file}`);
@@ -317,7 +424,7 @@ app.use((error, req, res, next) => {
             return res.status(400).json({ error: 'File too large. Maximum size is 500MB.' });
         }
     }
-    
+
     console.error('Unhandled error:', error);
     res.status(500).json({ error: 'Internal server error' });
 });
@@ -325,10 +432,10 @@ app.use((error, req, res, next) => {
 // Initialize and start server
 async function startServer() {
     await ensureUploadsDir();
-    
+
     // Run cleanup every 30 minutes
     setInterval(cleanupOldFiles, 30 * 60 * 1000);
-    
+
     app.listen(port, () => {
         console.log(`🚀 Hyper Files Inspector Web UI running at http://localhost:${port}`);
         console.log(`📁 Upload directory: ${uploadsDir}`);

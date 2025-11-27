@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,7 +34,7 @@
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .header p {
@@ -44,7 +45,7 @@
         .main-card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             margin-bottom: 2rem;
         }
@@ -59,7 +60,8 @@
             cursor: pointer;
         }
 
-        .upload-area:hover, .upload-area.dragover {
+        .upload-area:hover,
+        .upload-area.dragover {
             border-color: #667eea;
             background: #f8f9ff;
         }
@@ -172,14 +174,19 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .results {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             padding: 2rem;
             margin-top: 2rem;
             display: none;
@@ -275,22 +282,23 @@
             .container {
                 padding: 1rem;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .upload-area {
                 padding: 2rem 1rem;
                 margin: 1rem;
             }
-            
+
             .columns-list {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -320,6 +328,17 @@
                 <button class="btn btn-secondary" id="exportFullBtn">📤 Export Full Data</button>
                 <button class="btn btn-success" id="downloadJsonBtn" style="display: none;">💾 Download JSON</button>
                 <button class="btn btn-success" id="downloadCsvBtn" style="display: none;">💾 Download CSV</button>
+
+                <div id="saveToDiskArea"
+                    style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <h3>💾 Save to Local Disk</h3>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <input type="text" id="savePathInput" placeholder="Enter destination folder (e.g., ~/Desktop)"
+                            style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <button class="btn btn-success" id="saveJsonBtn">Save JSON to Disk</button>
+                    <button class="btn btn-success" id="saveCsvBtn">Save CSV to Disk</button>
+                </div>
             </div>
 
             <div class="loading" id="loading">
@@ -354,6 +373,10 @@
         const exportFullBtn = document.getElementById('exportFullBtn');
         const downloadJsonBtn = document.getElementById('downloadJsonBtn');
         const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+        const saveToDiskArea = document.getElementById('saveToDiskArea');
+        const savePathInput = document.getElementById('savePathInput');
+        const saveJsonBtn = document.getElementById('saveJsonBtn');
+        const saveCsvBtn = document.getElementById('saveCsvBtn');
 
         // File upload handling
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -368,6 +391,8 @@
         exportFullBtn.addEventListener('click', () => exportFile(false));
         downloadJsonBtn.addEventListener('click', () => downloadFile('json'));
         downloadCsvBtn.addEventListener('click', () => downloadFile('csv'));
+        saveJsonBtn.addEventListener('click', () => saveFileToDisk('json'));
+        saveCsvBtn.addEventListener('click', () => saveFileToDisk('csv'));
 
         function handleDragOver(e) {
             e.preventDefault();
@@ -526,7 +551,7 @@
 
             if (data.tables && data.tables.length > 0) {
                 html += '<h3>📊 Tables</h3>';
-                
+
                 data.tables.forEach((table, index) => {
                     html += `
                         <div class="table-info">
@@ -619,6 +644,55 @@
         function showDownloadButtons() {
             downloadJsonBtn.style.display = 'inline-block';
             downloadCsvBtn.style.display = 'inline-block';
+            saveToDiskArea.style.display = 'block';
+        }
+
+        async function saveFileToDisk(format) {
+            if (!currentFile || !lastExportData) return;
+
+            const targetPath = savePathInput.value.trim();
+            if (!targetPath) {
+                showError('Please enter a destination folder path');
+                return;
+            }
+
+            const sampleOnly = lastExportData.export_type === 'sample_only';
+            const maxRows = lastExportData.max_rows_per_table;
+
+            showLoading(`Saving ${format.toUpperCase()} to disk...`);
+
+            try {
+                const response = await fetch(`/api/save/${currentFile.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        targetPath,
+                        format,
+                        sampleOnly,
+                        maxRows
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultsContent.innerHTML = `
+                        <div class="success">
+                            ✅ ${result.message}
+                        </div>
+                        ${resultsContent.innerHTML}
+                    `;
+                    results.style.display = 'block';
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showError('Failed to save file: ' + error.message);
+            } finally {
+                hideLoading();
+            }
         }
 
         function downloadFile(format) {
@@ -626,7 +700,7 @@
 
             const sampleOnly = lastExportData.export_type === 'sample_only';
             const maxRows = lastExportData.max_rows_per_table;
-            
+
             let url = `/api/download/${currentFile.id}/${format}?sampleOnly=${sampleOnly}`;
             if (maxRows) {
                 url += `&maxRows=${maxRows}`;
@@ -654,4 +728,5 @@
         }
     </script>
 </body>
+
 </html>
