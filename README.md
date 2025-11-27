@@ -52,6 +52,7 @@ This starts a local web server at `http://localhost:3000` where you can:
 - 🔍 **Inspect** files with a beautiful interface
 - 📊 **View** detailed table schemas and sample data
 - 💾 **Download** exported data as JSON or CSV
+- 📂 **Save to Disk** directly to a specified folder (e.g., `~/Desktop`)
 - 🧹 **Automatic cleanup** of uploaded files after 1 hour
 
 ### Interactive Mode (CLI)
