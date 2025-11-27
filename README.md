@@ -8,8 +8,8 @@ A JavaScript application to inspect Tableau Hyper files and discover their conte
 - 📁 **File Discovery**: Automatically find all `.hyper` files in a directory and subdirectories
 - 🔍 **File Inspection**: Extract detailed metadata, schema information, and sample data
 - 📤 **Data Export**: Export complete data from `.hyper` files to JSON/CSV format
-- � **Download Options**: Direct download of exported data in multiple formats
-- �📊 **Rich Display**: Beautiful web interface and terminal output with tables and formatting
+- ⬇️**Download Options**: Direct download of exported data in multiple formats
+- 📊 **Rich Display**: Beautiful web interface and terminal output with tables and formatting
 - 🖥️ **Interactive Mode**: User-friendly CLI interface for selecting and inspecting files
 - 🧹 **Auto Cleanup**: Automatic cleanup of uploaded files for privacy and storage
 - ⚡ **Fast**: Leverages Tableau's Hyper API for efficient data access
