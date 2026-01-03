@@ -10,7 +10,7 @@
     "discover": "node index.js discover",
     "export": "node index.js export",
     "web": "node server.js",
-    "setup": "npm install && pip install tableauhyperapi"
+    "setup": "npm install && python3 -m venv .venv && .venv/bin/python -m pip install tableauhyperapi"
   },
   "keywords": [
     "tableau",
