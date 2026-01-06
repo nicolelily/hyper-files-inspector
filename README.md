@@ -25,7 +25,7 @@ A JavaScript application to inspect Tableau Hyper files and discover their conte
 
 1. **Clone or download this project**
    ```bash
-   cd hyper-files
+   cd hyper-files-inspector
    ```
 
 2. **Install dependencies**
@@ -48,12 +48,10 @@ npm run web
 ```
 
 This starts a local web server at `http://localhost:3000` where you can:
-- 📤 **Drag & drop** .hyper files to upload
-- 🔍 **Inspect** files with a beautiful interface
-- 📊 **View** detailed table schemas and sample data
-- 💾 **Download** exported data as JSON or CSV
-- 📂 **Save to Disk** directly to a specified folder (e.g., `~/Desktop`)
-- 🧹 **Automatic cleanup** of uploaded files after 1 hour
+- 📤 **Upload & Auto-Inspect**: Drag & drop .hyper files to automatically view metadata and sample data
+- 📊 **Dynamic Analysis**: View detailed table schemas and sample data immediately
+- 💾 **Seamless Export**: Export to JSON or CSV and save to disk after inspection
+- 🧹 **Privacy**: Automatic cleanup of uploaded files after 1 hour
 
 ### Interactive Mode (CLI)
 
