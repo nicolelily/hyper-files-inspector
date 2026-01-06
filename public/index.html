@@ -322,10 +322,12 @@
             </div>
 
             <div class="actions" id="actions">
-                <h3>🛠️ Choose an Action</h3>
-                <button class="btn" id="inspectBtn">🔍 Inspect File</button>
-                <button class="btn btn-secondary" id="exportSampleBtn">📤 Export Sample Data</button>
-                <button class="btn btn-secondary" id="exportFullBtn">📤 Export Full Data</button>
+                <h3 id="actionsTitle">🛠️ Choose an Action</h3>
+                <div id="initialActions">
+                    <button class="btn" id="inspectBtn">🔍 Inspect File</button>
+                    <button class="btn btn-secondary" id="exportSampleBtn">📤 Export Sample Data</button>
+                    <button class="btn btn-secondary" id="exportFullBtn">📤 Export Full Data</button>
+                </div>
                 <button class="btn btn-success" id="downloadJsonBtn" style="display: none;">💾 Download JSON</button>
                 <button class="btn btn-success" id="downloadCsvBtn" style="display: none;">💾 Download CSV</button>
 
@@ -469,6 +471,13 @@
             actions.style.display = 'block';
         }
 
+        function showActionsAfterInspection() {
+            // Show the actions container after inspection
+            actions.style.display = 'block';
+            // Update the title to encourage export
+            document.getElementById('actionsTitle').textContent = '📤 Want to export the data?';
+        }
+
         function showLoading(text) {
             loadingText.textContent = text;
             loading.style.display = 'block';
@@ -494,6 +503,7 @@
 
                 if (result.success) {
                     showInspectionResults(result.data);
+                    showActionsAfterInspection();
                 } else {
                     throw new Error(result.error);
                 }
@@ -646,6 +656,8 @@
             downloadJsonBtn.style.display = 'inline-block';
             downloadCsvBtn.style.display = 'inline-block';
             saveToDiskArea.style.display = 'block';
+            // Update title to show download options are ready
+            document.getElementById('actionsTitle').textContent = '💾 Download Your Exported Data';
         }
 
         async function saveFileToDisk(format) {
