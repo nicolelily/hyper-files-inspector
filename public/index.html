@@ -449,8 +449,8 @@
                 if (result.success) {
                     currentFile = result.file;
                     showFileInfo(result.file);
-                    hideLoading();
-                    showActions();
+                    // Automatically inspect file after upload to show sample data
+                    inspectFile();
                 } else {
                     throw new Error(result.error);
                 }
@@ -563,7 +563,8 @@
                 html += '<h3>📊 Tables</h3>';
 
                 data.tables.forEach((table, index) => {
-                    html += `
+                    console.log('Rendering table:', table.name, 'Sample data:', table.sample_data);
+                        html += `
                         <div class="table-info">
                             <h4>${index + 1}. ${table.full_name}</h4>
                             <p><strong>Type:</strong> ${table.type}</p>

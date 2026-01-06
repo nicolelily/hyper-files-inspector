@@ -325,9 +325,11 @@ class HyperFileInspector:
                         # Get row count
                         try:
                             count_query = f'SELECT COUNT(*) FROM {full_table_name}'
-                            row_count = connection.execute_scalar_query(count_query)
+                            row_count_raw = connection.execute_scalar_query(count_query)
+                            row_count = int(row_count_raw) if row_count_raw is not None else 0
                             total_rows += row_count
-                        except:
+                        except Exception as e:
+                            print(f"Error getting row count for {full_table_name}: {e}", file=sys.stderr)
                             row_count = "Unable to determine"
                         
                         # Get sample data (first 5 rows)
