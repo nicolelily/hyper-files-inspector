@@ -6,15 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hyper Files Inspector - Web UI</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Space Mono', monospace;
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #B01469;
             min-height: 100vh;
             color: #333;
         }
@@ -29,6 +31,13 @@
             text-align: center;
             margin-bottom: 3rem;
             color: white;
+        }
+
+        .header-logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 1rem;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
         }
 
         .header h1 {
@@ -62,13 +71,13 @@
 
         .upload-area:hover,
         .upload-area.dragover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #005975;
+            background: #f0f9fb;
         }
 
         .upload-icon {
             font-size: 3rem;
-            color: #667eea;
+            color: #005975;
             margin-bottom: 1rem;
         }
 
@@ -88,7 +97,7 @@
         }
 
         .btn {
-            background: #667eea;
+            background: #005975;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -100,7 +109,7 @@
         }
 
         .btn:hover {
-            background: #5a67d8;
+            background: #004560;
             transform: translateY(-2px);
         }
 
@@ -111,19 +120,20 @@
         }
 
         .btn-secondary {
-            background: #718096;
+            background: #B01469;
         }
 
         .btn-secondary:hover {
-            background: #4a5568;
+            background: #8c1054;
         }
 
         .btn-success {
-            background: #48bb78;
+            background: #DAFE00;
+            color: #005975;
         }
 
         .btn-success:hover {
-            background: #38a169;
+            background: #c5e500;
         }
 
         .file-info {
@@ -131,12 +141,12 @@
             padding: 1rem;
             margin: 1rem 2rem;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #005975;
             display: none;
         }
 
         .file-info h3 {
-            color: #667eea;
+            color: #005975;
             margin-bottom: 0.5rem;
         }
 
@@ -160,12 +170,12 @@
             display: none;
             text-align: center;
             padding: 2rem;
-            color: #667eea;
+            color: #005975;
         }
 
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #005975;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -193,7 +203,7 @@
         }
 
         .results h2 {
-            color: #667eea;
+            color: #005975;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid #e2e8f0;
@@ -204,11 +214,11 @@
             padding: 1rem;
             margin: 1rem 0;
             border-radius: 8px;
-            border-left: 4px solid #48bb78;
+            border-left: 4px solid #B01469;
         }
 
         .table-info h4 {
-            color: #48bb78;
+            color: #B01469;
             margin-bottom: 0.5rem;
         }
 
@@ -232,7 +242,7 @@
         }
 
         .column-type {
-            color: #667eea;
+            color: #005975;
             font-size: 0.8rem;
         }
 
@@ -255,7 +265,7 @@
         }
 
         .sample-table th {
-            background: #667eea;
+            background: #005975;
             color: white;
             font-weight: bold;
         }
@@ -270,12 +280,45 @@
         }
 
         .success {
-            background: #c6f6d5;
-            color: #22543d;
+            background: #f8ffe6;
+            color: #005975;
             padding: 1rem;
             border-radius: 8px;
             margin: 1rem 0;
-            border-left: 4px solid #38a169;
+            border-left: 4px solid #DAFE00;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+            margin-top: 3rem;
+        }
+
+        .footer-credit {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -352,6 +395,17 @@
         <div class="results" id="results">
             <h2 id="resultsTitle">📊 Results</h2>
             <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-credit">
+            made with ❤️ <a href="https://nicolelily.github.io/" target="_blank">nicole mark</a>
+        </div>
+        <div class="footer-links">
+            <a href="https://github.com/nicolelily" target="_blank">GitHub</a>
+            <span>•</span>
+            <a href="https://bsldb.app/" target="_blank">U.S. Breed-Specific Legislation Database</a>
         </div>
     </div>
 
